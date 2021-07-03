@@ -1,0 +1,73 @@
+import math
+from argparse import ArgumentParser
+
+from learningscenariogenerators.simulatedannealing import \
+    SimulatedAnnealingLearningScenario1Generator
+
+if __name__ == '__main__':
+    arg_parser = ArgumentParser()
+    arg_parser.add_argument('name')
+    arg_parser.add_argument('target_dir')
+    arg_parser.add_argument('--num_pos_individuals', type=int)
+    arg_parser.add_argument('--num_neg_individuals', type=int)
+    arg_parser.add_argument('--num_other_individuals', type=int)
+    arg_parser.add_argument('--num_classes', type=int)
+    arg_parser.add_argument('--num_object_properties', type=int)
+    arg_parser.add_argument('--num_datatype_properties', type=int)
+    arg_parser.add_argument('--existential_restriction_nesting', type=int)
+
+    args = arg_parser.parse_args()
+
+    scenario_name = args.name
+    target_dir = args.target_dir
+
+    num_pos = args.num_pos_individuals
+    num_neg = args.num_neg_individuals
+    num_other = args.num_other_individuals
+    num_classes = args.num_classes
+    num_obj_props = args.num_object_properties
+    num_datatype_props = args.num_datatype_properties
+
+    kw_args = {}
+
+    if num_pos is not None:
+        kw_args['num_pos_examples'] = num_pos
+
+    if num_neg is not None:
+        kw_args['num_neg_examples'] = num_neg
+
+    if num_other is not None:
+        if num_pos is None and num_neg is None:
+            # pos and neg examples should amount to at least half of all
+            # individuals s.t. one can assign at least one non-example
+            # individual to each example individual via an object property
+            num_pos = math.floor(num_other / 2)
+            num_neg = math.floor(num_other / 2)
+
+        elif num_pos is None and num_neg is not None:
+            num_pos = num_other - num_neg
+
+        elif num_pos is not None and num_neg is None:
+            num_neg = num_other - num_pos
+
+        kw_args['num_overall_individuals'] = num_pos + num_neg + num_other
+
+    if num_classes is not None:
+        kw_args['num_classes'] = num_classes
+
+    if num_obj_props is not None:
+        kw_args['num_object_properties'] = num_obj_props
+
+    if num_datatype_props is not None:
+        kw_args['num_data_properties'] = num_datatype_props
+
+    if args.existential_restriction_nesting is not None:
+        kw_args['existential_nesting_depth'] = \
+            args.existential_restriction_nesting
+
+    creator = SimulatedAnnealingLearningScenario1Generator(**kw_args)
+    scenario = creator.generate_scenario()
+    scenario.write_sml_bench_scenario(target_dir, scenario_name)
+
+
+

@@ -1,0 +1,2 @@
+class OntologyConstraintsViolatedException(Exception):
+    pass
